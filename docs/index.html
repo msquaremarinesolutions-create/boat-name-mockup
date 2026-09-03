@@ -236,7 +236,7 @@
     { id: "gold", label: "Gold", swatch: "#c8a24a" }
   ];
 
-  var img = null, font = FONTS[0], finish = FINISHES[0];
+  var img = null, font = FONTS[0], finish = FINISHES[0], dragging = false;
   var pts = null;                    // corner points in canvas pixel space
   var canvas = $("canvas"), ctx = canvas.getContext("2d");
   var tl = $("text-layer"), tctx = tl.getContext("2d");
@@ -417,7 +417,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     var name = $("name").value.toUpperCase().replace(/\s+/g, " ").trim();
-    if (pts) contrastNote();                     // measure the bare photo first
+    if (pts && !dragging) contrastNote();        // measure the bare photo, but not on every drag frame
     if (!pts || !paintText(name)) return;
     var H = homography(pts);
     if (!H) return;
@@ -463,6 +463,7 @@
   function dragStart(i) {
     return function (ev) {
       ev.preventDefault();
+      dragging = true;
       var move = function (e) {
         var t = e.touches ? e.touches[0] : e;
         var r = canvas.getBoundingClientRect();
@@ -475,6 +476,8 @@
       var up = function () {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
+        dragging = false;
+        render();                                // final frame, with the contrast check
       };
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
